@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Sample_07_MeasurementDataChannel" Id="{ff115613-3ab5-49e8-95be-58e038c26551}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Sample_07_MeasurementDataChannel
+VAR_INPUT
+	nStateChannel		AT%I*	: USINT;
+	nScale				AT%I*	: SINT;
+	MVDistance			AT%I*	: INT;
+END_VAR
+VAR_OUTPUT
+	bValid						: BOOL;
+	bError						: BOOL;
+	nValueStatus				: E_IolMdc_ValueStatus;
+	nValueDINT					: DINT;
+	nValueREAL					: LREAL;
+	nScaleOut					: INT;
+END_VAR
+VAR
+	fbMeasurement				: IOL_MeasurementDataChannel_INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbMeasurement
+(
+	Enable := TRUE, 
+	SubstituteValue := 500, 
+	ChannelState := nStateChannel, 
+	ScaleIn := nScale, 
+	MeasurementValue := MVDistance, 
+	Valid => bValid, 
+	Error => bError, 
+	ValueStatus => nValueStatus, 
+	ValueReal => nValueREAL, 
+	ValueDINT => nValueDINT, 
+	Scale => nScaleOut 
+);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Sample_07_MeasurementDataChannel">
+      <LineId Id="23" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="24" Count="9" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="52" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

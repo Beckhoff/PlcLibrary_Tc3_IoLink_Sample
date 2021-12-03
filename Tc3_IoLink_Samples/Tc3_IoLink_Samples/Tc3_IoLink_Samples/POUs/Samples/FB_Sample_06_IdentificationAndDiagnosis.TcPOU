@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Sample_06_IdentificationAndDiagnosis" Id="{45df3bac-d3fe-4680-9bb5-cf184f59a534}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Sample_06_IdentificationAndDiagnosis
+VAR_INPUT
+	sApplicationTagIn		: STRING(32) := '';
+	sFunctionTagIn			: STRING(32) := '';
+	sLocationTagIn			: STRING(32) := '';
+	bExecute				: BOOL;
+END_VAR
+VAR_OUTPUT
+	bBusy					: BOOL := FALSE;
+	bDone					: BOOL := FALSE;
+	bError					: BOOL := FALSE;
+	
+	sIolError				: STRING;
+	sAdsError				: STRING;
+	aProfileIDList			: ARRAY [0..31] OF E_IolProfileIdentifier;
+	aFunctionClassIDList	: ARRAY[0..31] OF E_IolProfileIdentifier;
+	stIDentObjects			: ST_IolIdentificationObjects;
+	bDeviceOK				: BOOL;
+	nDeviceStatus			: E_IolDeviceStatus;
+	DetailedDeviceStatus	: T_IolDetailedDeviceStatus;
+END_VAR
+VAR
+	bExecuteOld				: BOOL;
+	nState					: INT := 0;
+	IolDiagAndIdent			: IOL_IdentificationAndDiagnosis;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[////
+// Execute/Busy State Machine
+//
+IF bExecute AND NOT bExecuteOld AND NOT bBusy THEN
+	bBusy := TRUE;
+	nState := 10;	// START
+ELSIF NOT bExecute THEN
+	bBusy := FALSE;
+	bError := FALSE;
+	bDone := FALSE;
+	sIolError:='';
+	sADSError:='';
+END_IF
+bExecuteOld := bExecute;
+	
+
+CASE nState OF
+	
+// IDLE
+0:;
+
+// START
+10:
+	IolDiagAndIdent(Execute := FALSE);
+	
+	IolDiagAndIdent.MasterAoeNetId := F_CreateAmsNetId(GVL_IO.sTerm2AmsNetId);
+	IolDiagAndIdent.IolPort := E_iolport.Port4;
+	IolDiagAndIdent.Funct := E_IolIad_Function.ReadAll;
+	IolDiagAndIdent.ApplicationSpecificTagIn := sApplicationTagIn;
+	IolDiagAndIdent.FunctionTagIn := sFunctionTagIn;
+	IolDiagAndIdent.LocationTagIn := sLocationTagIn;
+	
+	IolDiagAndIdent.Execute := TRUE;
+	nState := 20; // WAIT FOR DONE
+	
+// WAIT FOR DONE
+20:
+	IF NOT IOlDiagAndIdent.Busy  AND NOT IOlDiagAndIdent.Error THEN 
+		nState := 30; // DONE
+	END_IF
+
+// DONE
+30:
+	aProfileIDList := IolDiagAndIdent.ProfileIDList;
+	aFunctionClassIDList := IolDiagAndIdent.FunctionClassIDList;
+	stIDentObjects := IolDiagAndIdent.IdentificationObjects;
+	bDeviceOK := IolDiagAndIdent.DeviceOK;
+	nDeviceStatus := IolDiagAndIdent.DeviceStatus;
+	DetailedDeviceStatus := IolDiagAndIdent.DetailedDeviceStatus;
+	
+	IolDiagAndIdent.Execute := FALSE;
+	nState := 0; // INIT
+
+END_CASE
+
+
+////
+// call FBs
+//
+IolDiagAndIdent();
+
+
+////
+// Error Handling
+//
+IF NOT bError AND bBusy THEN
+	IF IolDiagAndIdent.Error THEN
+		nState := 0;
+		bBusy := FALSE;
+		bError := TRUE;
+		sIolError := F_IolGetIolErrorTxt(ioldiagandIdent.IolError);
+		sAdsError := F_IolGetadsErrorTxt(ioldiagandident.AdsError);
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Sample_06_IdentificationAndDiagnosis">
+      <LineId Id="80" Count="8" />
+      <LineId Id="91" Count="1" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="96" Count="6" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="162" Count="4" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="171" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="177" Count="6" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="155" Count="4" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="187" Count="8" />
+      <LineId Id="201" Count="1" />
+      <LineId Id="199" Count="1" />
+      <LineId Id="186" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

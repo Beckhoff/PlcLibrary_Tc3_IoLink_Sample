@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="MAIN" Id="{4ac157f0-1324-4ab6-9db8-63e8080d6520}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	fbSample_01_IolRead 					: FB_Sample_01_IolRead;
+	fbSample_02_IolWrite 					: FB_Sample_02_IolWrite;
+	fbSample_03_IolSlave 					: FB_Sample_03_IolSlave;
+	fbSample_04_IolStdVarSlave 				: FB_Sample_04_IolStdVarSlave;
+	fbSample_06_IdentificationAndDiagnosis	: FB_Sample_06_IdentificationAndDiagnosis;
+	fbSample_07_MeasurementDataChannel		: FB_Sample_07_MeasurementDataChannel;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+fbSample_01_IolRead(); 		
+fbSample_02_IolWrite();	
+fbSample_03_IolSlave(); 
+fbSample_04_IolStdVarSlave();
+fbSample_06_IdentificationAndDiagnosis();
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="52" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="10" Count="2" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="20" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

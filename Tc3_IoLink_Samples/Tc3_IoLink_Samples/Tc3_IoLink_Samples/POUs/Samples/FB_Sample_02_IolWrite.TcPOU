@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Sample_02_IolWrite" Id="{67e4ac1c-ec50-4c47-93da-dc06e43d9991}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Sample_02_IolWrite
+VAR_INPUT
+	bExecute				: BOOL := FALSE;
+	sApplicationTag			: STRING(32) := '';
+END_VAR
+VAR_OUTPUT
+	bBusy					: BOOL := FALSE;
+	bDone					: BOOL := FALSE;
+	bError					: BOOL := FALSE;
+	nAdsError				: E_AdsErr := E_AdsErr.NOERR;
+	nIolError				: E_IolError := E_IolError.NoError;
+	sErrorTxt				: STRING(255) := '';
+END_VAR
+VAR
+	bExecuteOld				: BOOL;
+	nState					: INT := 0;
+	fbIolWrite 				: FB_IolWrite;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[////
+// Execute/Busy State Machine
+//
+IF bExecute AND NOT bExecuteOld AND NOT bBusy THEN
+	bBusy := TRUE;
+	nState := 10;	// WRITE
+ELSIF NOT bExecute THEN
+	bBusy := FALSE;
+	bError := FALSE;
+	bDone := FALSE;
+	nAdsError := E_AdsErr.NOERR;
+	nIolError := E_IolError.NoError;
+	sErrorTxt := '';
+END_IF
+bExecuteOld := bExecute;
+
+
+////
+// FB State Machine
+//
+CASE nState OF
+	
+// IDLE
+0:;
+
+// WRITE
+10:	
+	fbIolWrite(bExecute := FALSE);
+	fbIolWrite.sNetId := F_CreateAmsNetId(GVL_IO.sTerm2AmsNetId);
+	fbIolWrite.nIolPort := GVL_IO.nTerm2EPI1008;
+	fbIolWrite.pSRCBuf := ADR(sApplicationTag);
+	fbIolWrite.cbBufLen := 32;
+	fbIolWrite.nIndex := 16#18;
+	fbIolWrite.nSubindex := 0;
+	fbIolWrite.bExecute := TRUE;
+	
+	nState := 20; // WAIT_FOR_DONE 
+	
+// WAIT_FOR_DONE
+20:
+	IF fbIolWrite.bDone THEN
+		bDone := TRUE;
+		bBusy := FALSE;
+		nState := 0; // IDLE
+	END_IF 
+END_CASE
+
+
+////
+// call FBs
+//
+fbIolWrite();
+
+////
+// Error Handling
+//
+IF NOT bError AND bBusy THEN
+	IF fbIolWrite.bError THEN
+		nState := 0;
+		bBusy := FALSE;
+		bError := TRUE;
+		nAdsError := fbIolWrite.nAdsError;
+		nIolError := fbIolWrite.nIolError;
+		sErrorTxt := F_IolGetErrorTxt(fbIolWrite.hresult);
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Sample_02_IolWrite">
+      <LineId Id="157" Count="26" />
+      <LineId Id="186" Count="24" />
+      <LineId Id="212" Count="12" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

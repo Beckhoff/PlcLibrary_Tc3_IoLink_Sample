@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Sample_01_IolRead" Id="{66c69421-317c-4356-a9a7-5dc9639e08bb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Sample_01_IolRead
+VAR_INPUT
+	bExecute				: BOOL := FALSE;
+END_VAR
+VAR_OUTPUT
+	bBusy					: BOOL := FALSE;
+	bDone					: BOOL := FALSE;
+	bError					: BOOL := FALSE;
+	nAdsError				: E_AdsErr := E_AdsErr.NOERR;
+	nIolError				: E_IolError := E_IolError.NoError;
+	sErrorTxt				: STRING(255) := '';
+	sApplicationTag			: STRING(32) := '';
+END_VAR
+VAR
+	bExecuteOld				: BOOL;
+	nState					: INT := 0;
+	fbIolRead 				: FB_IolRead;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[////
+// Execute/Busy State Machine
+//
+IF bExecute AND NOT bExecuteOld AND NOT bBusy THEN
+	bBusy := TRUE;
+	nState := 10;	// READ
+ELSIF NOT bExecute THEN
+	bBusy := FALSE;
+	bError := FALSE;
+	bDone := FALSE;
+	nAdsError := E_AdsErr.NOERR;
+	nIolError := E_IolError.NoError;
+	sErrorTxt := '';
+END_IF
+bExecuteOld := bExecute;
+
+////
+// FB State Machine
+//
+CASE nState OF
+// IDLE
+0:;
+// READ
+10:
+	sApplicationTag := '';
+	
+	fbIolRead(bExecute := FALSE);
+	fbIolRead.sNetId := F_CreateAmsNetId(GVL_IO.sTerm2AmsNetId);
+	fbIolRead.nIolPort := E_IolPort.Port1;
+	fbIolRead.pDSTBuf := ADR(sApplicationTag);
+	fbIolRead.cbBufLen := 32;
+	fbIolRead.nIndex := 16#18; 
+	fbIolRead.nSubindex := 0;
+	fbIolRead.bExecute := TRUE;
+	
+	nState := 20; // WAIT_FOR_DONE 
+	
+// WAIT_FOR_DONE
+20:
+	IF fbIolRead.bDone THEN
+		bDone := TRUE;
+		bBusy := FALSE;
+		nState := 0; // IDLE
+	END_IF 
+END_CASE
+
+////
+// call FBs
+//
+fbIolRead();
+
+////
+// Error Handling
+//
+IF NOT bError AND bBusy THEN
+	IF fbIolRead.bError THEN
+		nState := 0;
+		bBusy := FALSE;
+		bError := TRUE;
+		nAdsError := fbIolRead.nAdsError;
+		nIolError := fbIolRead.nIolError;
+		sErrorTxt := F_IolGetErrorTxt(fbIolRead.hresult);
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Sample_01_IolRead">
+      <LineId Id="21" Count="8" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="83" Count="1" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="87" Count="1" />
+      <LineId Id="73" Count="3" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="127" Count="4" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="58" Count="6" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

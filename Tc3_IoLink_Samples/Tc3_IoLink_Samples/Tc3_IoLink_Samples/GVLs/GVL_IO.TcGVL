@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="GVL_IO" Id="{956162ab-c92d-4637-a66c-9f4672afa76e}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	sTerm2AmsNetId 	AT%I*			: AMSNETID;
+	
+	nTerm2EPI1008					: E_IolPort := E_IolPort.Port1;
+	nTerm2EPI2008					: E_IolPort := E_IolPort.Port2;
+	nTerm2EPI3174					: E_IolPort := E_IolPort.Port3;
+
+	nTerm2Port1State 	AT%I*		: USINT;
+	nTerm2Port2State 	AT%I*		: USINT;
+	nTerm2Port3State 	AT%I*		: USINT;
+	nTerm2Port4State 	AT%I*		: USINT;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

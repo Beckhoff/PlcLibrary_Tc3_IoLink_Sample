@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="FB_Sample_04_IolStdVarSlave" Id="{4ad6e99a-8088-4240-8d83-1320a95380e4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Sample_04_IolStdVarSlave
+VAR_INPUT
+	bExecute				: BOOL := FALSE;
+	sApplicationTag			: STRING(32) := '';
+END_VAR
+VAR_OUTPUT
+	bBusy					: BOOL := FALSE;
+	bDone					: BOOL := FALSE;
+	bError					: BOOL := FALSE;
+	nAdsError				: E_AdsErr := E_AdsErr.NOERR;
+	nIolError				: E_IolError := E_IolError.NoError;
+	sErrorTxt				: STRING(255) := '';
+END_VAR
+VAR
+	bExecuteOld				: BOOL;
+	nState					: INT := 0;
+	fbIolSlave 				: FB_IolStdVarSlave;
+	bInitDone				: BOOL := FALSE;
+	hr						: HRESULT;
+	sApplicationTagRead		: STRING(32) := '';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[////
+// Init
+//
+IF NOT bInitDone THEN
+	bInitDone := TRUE;
+	fbIolSlave.MasterAoeNetId := F_CreateAmsNetId(GVL_IO.sTerm2AmsNetId);
+	fbIolSlave.Port := GVL_IO.nTerm2EPI1008;
+	fbIolSlave.Name := 'EPI1008';
+END_IF
+
+////
+// Execute/Busy State Machine
+//
+IF bExecute AND NOT bExecuteOld AND NOT bBusy THEN
+	bBusy := TRUE;
+	nState := 10;	// WRITE
+ELSIF NOT bExecute THEN
+	bBusy := FALSE;
+	bError := FALSE;
+	bDone := FALSE;
+	nAdsError := E_AdsErr.NOERR;
+	nIolError := E_IolError.NoError;
+	sErrorTxt := '';
+END_IF
+bExecuteOld := bExecute;
+
+
+////
+// FB State Machine
+//
+CASE nState OF
+	
+// IDLE
+0:;
+
+// WRITE
+10:
+	hr := fbIolSlave.WriteApplicationSpecificTag(sApplicationTag);
+	
+	IF NOT F_IolIsBusy(hr) THEN
+		IF FAILED(hr) THEN
+			bBusy := FALSE;
+			bError := TRUE;
+			sErrorTxt := fbIolSlave.ErrorTxt;
+			nAdsError := F_IolGetAdsError(hr);
+			nIolError := F_IolGetIolError(hr);
+			nState := 0; // IDLE;
+		ELSE
+			nState := 20; // READ;
+		END_IF
+	END_IF
+	
+// READ
+20:
+	hr := fbIolSlave.ReadApplicationSpecificTag(sApplicationTagRead);
+	
+	IF NOT F_IolIsBusy(hr) THEN
+		IF FAILED(hr) THEN
+			bBusy := FALSE;
+			bError := TRUE;
+			sErrorTxt := fbIolSlave.ErrorTxt;
+			nAdsError := F_IolGetAdsError(hr);
+			nIolError := F_IolGetIolError(hr);
+			nState := 0; // IDLE;
+		ELSE
+			nState := 30; // CHECK;
+		END_IF
+	END_IF
+	
+// CHECK
+30:
+	IF sApplicationTag <> sApplicationTagRead THEN
+		bBusy := FALSE;
+		bError := TRUE;
+		sErrorTxt := 'sApplicationTag and sApplicationTagRead are not equal!';
+	ELSE
+		bBusy := FALSE;
+		bDone := TRUE;
+		nState := 0;
+	END_IF
+END_CASE
+
+
+////
+// call FBs
+//
+fbIolSlave();]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Sample_04_IolStdVarSlave">
+      <LineId Id="160" Count="1" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="162" Count="1" />
+      <LineId Id="165" Count="1" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="21" Count="8" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="36" Count="3" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="202" Count="12" />
+      <LineId Id="217" Count="2" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="221" Count="12" />
+      <LineId Id="236" Count="2" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="249" Count="1" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="247" Count="1" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="242" Count="2" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="52" Count="4" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
