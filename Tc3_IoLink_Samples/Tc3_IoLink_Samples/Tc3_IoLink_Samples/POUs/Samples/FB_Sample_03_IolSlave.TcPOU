@@ -103,13 +103,7 @@ CASE nState OF
 		bDone := TRUE;
 		nState := 0;
 	END_IF
-END_CASE
-
-
-////
-// call FBs
-//
-fbIolSlave();]]></ST>
+END_CASE]]></ST>
     </Implementation>
     <LineIds Name="FB_Sample_03_IolSlave">
       <LineId Id="160" Count="1" />
@@ -147,8 +141,6 @@ fbIolSlave();]]></ST>
       <LineId Id="246" Count="0" />
       <LineId Id="242" Count="2" />
       <LineId Id="20" Count="0" />
-      <LineId Id="48" Count="0" />
-      <LineId Id="52" Count="4" />
     </LineIds>
   </POU>
 </TcPlcObject>
